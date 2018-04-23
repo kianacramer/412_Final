@@ -1,0 +1,90 @@
+/*
+Final lab: Automatic Plant Waterer
+4/19/18
+Alora Mazarakis, Kiana Cramer, Zach Gore, Hunter York
+*/
+
+#include <math.h>
+#include <stdio.h>
+#include <avr/io.h>
+#include <stdint.h>
+
+
+#define ADC_PIN			0	//PC0
+#define WATER_PIN		PD0
+#define SOIL_THRESHOLD	0	//cutoff for turning on the water pump
+//Function Initialization
+void collectWaterData();
+
+//Initialization
+//const int analogIn = PC0; //may need to update for soil sensor pins
+int moistvalue = 0; //value read from moisture sensor
+long int moistSenseSum = 0; //sum of 30 samples for the moisture
+//long int soilThreshold = 0; //Some constant value
+
+
+//Water pump control definition
+const int pumpPos = 6;
+const int pumpNeg = 7;
+
+//const int triggerValue = 100; //trigger value of moisture
+const int wateringTime = 30; //how long the plant is watered in ms
+
+int main()
+{
+	ADCSRA |= (1 << ADEN);
+	PORTD |= (1 << WATER_PIN); //sets water pin as output
+
+	
+	collectWaterData();
+	
+	while (1)
+	{
+			if (moistvalue < SOIL_THRESHOLD)
+			{
+				//wateringPosition(servoPosition, wateringTime);
+				PORTD |= (1 << WATER_PIN);
+			}
+			else
+			{
+				PORTD &= ~(1 << WATER_PIN);
+			}
+
+	}
+	
+	return 0;
+}
+
+void collectWaterData()
+{
+	for(int i = 0; i < 30; i++)
+	{
+		moistSenseSum += analogRead(ADC_PIN); //average soil data over 30 samples
+	}
+		
+	moistvalue = moistSenseSum / 30;
+
+	moistSenseSum = 0; //Reset soil data
+
+}
+
+void waterPump()
+{
+	//begin the pump
+	//digitalWrite(pumpPos, LOW);
+	//digitalWrite(pumpNeg, LOW);
+}
+
+int analogRead(int adcVal)
+{
+	ADMUX &= 0xf0;
+	ADMUX |= adcVal;
+	
+	ADCSRA |= (1 << ADSC);
+	
+	while ( (ADCSRA & (1 << ADSC)) );
+	
+	return ADC;
+}
+
+
